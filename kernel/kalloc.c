@@ -27,14 +27,14 @@ void
 kinit()
 {
   initlock(&kmem.lock, "kmem");
-  freerange(end, (void*)PHYSTOP);
+  freerange(end, (void*)PHYSTOP); //1MB内存是吧
 }
 
 void
 freerange(void *pa_start, void *pa_end)
 {
   char *p;
-  p = (char*)PGROUNDUP((uint64)pa_start);
+  p = (char*)PGROUNDUP((uint64)pa_start); //PGROUNDUP应该是增长一个物理页吧
   for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE)
     kfree(p);
 }
@@ -57,7 +57,7 @@ kfree(void *pa)
   r = (struct run*)pa;
 
   acquire(&kmem.lock);
-  r->next = kmem.freelist;
+  r->next = kmem.freelist;//freelist应该是空闲页的【头指针】
   kmem.freelist = r;
   release(&kmem.lock);
 }
@@ -79,4 +79,18 @@ kalloc(void)
   if(r)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
+}
+
+uint64
+countFreeMemory(void)
+{
+  acquire(&kmem.lock);
+  struct run *r = kmem.freelist;
+  int cnt = 0;
+  while(r){
+    cnt++;
+    r = r->next;
+  }
+  release(&kmem.lock);
+  return PGSIZE*cnt;
 }

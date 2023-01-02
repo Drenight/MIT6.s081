@@ -21,9 +21,11 @@ kvmmake(void)
 {
   pagetable_t kpgtbl;
 
+  // Kvmmake first allocates a page of physical memory to hold the root page-table page.
   kpgtbl = (pagetable_t) kalloc();
   memset(kpgtbl, 0, PGSIZE);
 
+  // Then it calls kvmmap to install the translations that the kernel needs.
   // uart registers
   kvmmap(kpgtbl, UART0, UART0, PGSIZE, PTE_R | PTE_W);
 
@@ -38,6 +40,8 @@ kvmmake(void)
 
   // map kernel data and the physical RAM we'll make use of.
   kvmmap(kpgtbl, (uint64)etext, (uint64)etext, PHYSTOP-(uint64)etext, PTE_R | PTE_W);
+
+  //上面的va和pa是一样的，下面这个活板是不一样的
 
   // map the trampoline for trap entry/exit to
   // the highest virtual address in the kernel.
@@ -84,8 +88,8 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
     panic("walk");
 
   for(int level = 2; level > 0; level--) {
-    pte_t *pte = &pagetable[PX(level, va)];
-    if(*pte & PTE_V) {
+    pte_t *pte = &pagetable[PX(level, va)]; //读这个PTE条目的内容
+    if(*pte & PTE_V) {                      //最后的几个位含有valid
       pagetable = (pagetable_t)PTE2PA(*pte);
     } else {
       if(!alloc || (pagetable = (pde_t*)kalloc()) == 0)
@@ -288,6 +292,7 @@ uvmfree(pagetable_t pagetable, uint64 sz)
 {
   if(sz > 0)
     uvmunmap(pagetable, 0, PGROUNDUP(sz)/PGSIZE, 1);
+  //printf("%d, %d\n",sz,PGROUNDUP(sz)/PGSIZE);
   freewalk(pagetable);
 }
 

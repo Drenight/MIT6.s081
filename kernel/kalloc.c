@@ -55,11 +55,15 @@ kfree(void *pa)
   memset(pa, 1, PGSIZE);
 
   r = (struct run*)pa;
+  printf("%p %p\n", r, *r);
+
 
   acquire(&kmem.lock);
   r->next = kmem.freelist;
   kmem.freelist = r;
   release(&kmem.lock);
+
+  printf("now %p %p\n", r, *r);
 }
 
 // Allocate one 4096-byte page of physical memory.

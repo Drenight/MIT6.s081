@@ -81,6 +81,35 @@ int
 sys_pgaccess(void)
 {
   // lab pgtbl: your code here.
+  uint64 vaStart;
+  int pages;
+  uint64 desMaskArray;
+  if(argaddr(0, &vaStart) < 0){
+    return -1;
+  }
+  if(argint(1, &pages) < 0){
+    return -1;
+  }
+  if(argaddr(2, &desMaskArray) < 0){
+    return -1;
+  }
+  if(pages > 64){
+    return -1;
+  }
+
+  int res = 0;
+  int bit = 1;
+  for(int page = 0; page < pages; page++){
+    pte_t *tmp = walk(myproc()->pagetable, vaStart + page*PGSIZE, 0);
+    int flag = PTE_FLAGS(*tmp);
+    if(flag & PTE_A){
+      res |= bit; 
+      *tmp &= ~PTE_A;
+    }
+    bit <<= 1;
+  }
+  copyout(myproc()->pagetable, desMaskArray, (void*)&res, sizeof(res));
+
   return 0;
 }
 #endif

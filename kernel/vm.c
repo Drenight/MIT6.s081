@@ -437,3 +437,42 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+void vmprint(pagetable_t pagetable, int dep){
+  // there are 2^9 = 512 PTEs in a page table.
+  
+  if(dep==0){
+    printf("page table %p\n", pagetable);
+  }
+  
+  for(int i = 0; i < 512; i++){
+    pte_t pte = pagetable[i];
+    if((pte & PTE_V) && (pte & (PTE_R|PTE_W|PTE_X)) == 0){
+      // this PTE points to a lower-level page table.
+      uint64 child = PTE2PA(pte);
+      char buf[50]="";
+      for(int i=0;i<dep;i++){
+        buf[3*i]='.';
+        buf[3*i+1]='.';
+        buf[3*i+2]=' ';
+      }
+      buf[3*dep]='\0';
+      if(strlen(buf)!=0)printf("%s", buf);
+      printf("..%d",i);
+      printf(": pte %p pa %p\n", pte, PTE2PA(pte));
+
+      vmprint((pagetable_t)child, dep+1);
+    } else if(pte & PTE_V){
+      char buf[50]="";
+      for(int i=0;i<dep;i++){
+        buf[3*i]='.';
+        buf[3*i+1]='.';
+        buf[3*i+2]=' ';
+      }
+      buf[3*dep]='\0';
+      if(strlen(buf)!=0)printf("%s", buf);
+      printf("..%d",i);
+      printf(": pte %p pa %p\n", pte, PTE2PA(pte));
+    }
+  }
+}

@@ -8,7 +8,8 @@ The code is updated in coressponding branches
 - 12.06
 - [x] syscall   
 - 12.27
-- [ ] pgtbl
+- [x] pgtbl
+- 01.09
 - [ ] traps
 - [ ] cow
 - [ ] thread
